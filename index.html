@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>财富管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            margin: auto;
+            backdrop-filter: blur(10px);
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        h1 {
+            font-weight: 600;
+            color: #f1c40f;
+        }
+        .wealth-display {
+            font-size: 28px;
+            font-weight: 600;
+            color: #f39c12;
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .chart-container canvas {
+            max-width: 100%;
+        }
+        .category {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+        input:focus {
+            background: rgba(255, 255, 255, 0.4);
+            outline: none;
+        }
+        .chart-container .chartjs-render-monitor {
+            color: #fff !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>财富管理系统</h1>
+        <h3 class="wealth-display">Net Worth (MYR): <span id="totalWealthMYR">0</span> MYR</h3>
+        
+        <div class="category">
+            <h3>MYR 资产</h3>
+            <label>Cash (MYR): <input type="number" id="cashMYR" oninput="updateWealth()"></label>
+            <label>Stock (MYR): <input type="number" id="stocksMYR" oninput="updateWealth()"></label>
+            <label>E-wallet (MYR): <input type="number" id="ewalletMYR" oninput="updateWealth()"></label>
+            <label>Fixed Deposit (MYR): <input type="number" id="fixedDepositMYR" oninput="updateWealth()"></label>
+        </div>
+        
+        <div class="category">
+            <h3>USD 资产</h3>
+            <label>Cash (USD): <input type="number" id="cashUSD" oninput="updateWealth()"></label>
+            <label>Stock (USD): <input type="number" id="stocksUSD" oninput="updateWealth()"></label>
+        </div>
+        
+        <label>Currency (USD/MYR): <input type="number" id="exchangeRate" value="4.5" step="0.01" oninput="updateWealth()"></label>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="wealthChart"></canvas>
+    </div>
+
+    <script>
+        function updateWealth() {
+            let cashMYR = parseFloat(document.getElementById("cashMYR").value) || 0;
+            let stocksMYR = parseFloat(document.getElementById("stocksMYR").value) || 0;
+            let ewalletMYR = parseFloat(document.getElementById("ewalletMYR").value) || 0;
+            let fixedDepositMYR = parseFloat(document.getElementById("fixedDepositMYR").value) || 0;
+            let cashUSD = parseFloat(document.getElementById("cashUSD").value) || 0;
+            let stocksUSD = parseFloat(document.getElementById("stocksUSD").value) || 0;
+            let exchangeRate = parseFloat(document.getElementById("exchangeRate").value) || 4.5;
+
+            let totalWealth = cashMYR + stocksMYR + ewalletMYR + fixedDepositMYR + (cashUSD + stocksUSD) * exchangeRate;
+            document.getElementById("totalWealthMYR").textContent = totalWealth.toFixed(2);
+            updateChart([cashMYR, stocksMYR, ewalletMYR, fixedDepositMYR, cashUSD * exchangeRate, stocksUSD * exchangeRate]);
+        }
+
+        let ctx = document.getElementById("wealthChart").getContext("2d");
+        let wealthChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ["Cash (MYR)", "Stock (MYR)", "E-wallet (MYR)", "Fixed Deposit (MYR)", "Cash (USD Converted)", "Stock (USD Converted)"],
+                datasets: [{
+                    data: [0, 0, 0, 0, 0, 0],
+                    backgroundColor: ["#f1c40f", "#e74c3c", "#3498db", "#2ecc71", "#9b59b6", "#1abc9c"],
+                    borderColor: "#ffffff",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: "#fff",
+                            generateLabels: function(chart) {
+                                return chart.data.labels.map((label, i) => {
+                                    return {
+                                        text: `${label}: ${chart.data.datasets[0].data[i].toFixed(2)} MYR`,
+                                        fillStyle: chart.data.datasets[0].backgroundColor[i],
+                                        strokeStyle: chart.data.datasets[0].borderColor,
+                                        lineWidth: 1,
+                                        hidden: false
+                                    };
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        function updateChart(data) {
+            wealthChart.data.datasets[0].data = data;
+            wealthChart.update();
+        }
+
+        window.onload = updateWealth;
+    </script>
+</body>
+</html>
